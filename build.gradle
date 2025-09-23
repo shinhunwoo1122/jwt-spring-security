@@ -29,6 +29,16 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.5'
+    /* jwt 추가 */
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+    // Spring Boot Starter Security: Spring Security의 핵심 기능들을 포함합니다.
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    // Spring Security Test: Security 관련 테스트를 위한 라이브러리입니다. (테스트 환경에만 필요)
+    testImplementation 'org.springframework.security:spring-security-test'
+
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	runtimeOnly 'com.mysql:mysql-connector-j'

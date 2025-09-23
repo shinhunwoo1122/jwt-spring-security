@@ -1,8 +1,27 @@
 spring:
   application:
     name: testProject
+
+  profiles:
+    active: dev
+
   datasource:
     url: jdbc:mysql://localhost:3306/testproject?serverTimezone=UTC&useSSL=false
     username: shinhunwoo
     password: a456456!
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+
+    # 로컬 개발용(dev) 프로파일
+  jwt:
+    secret: dGVzdHByb2plY3RfcGFzc3dvcmRfc2hpbmh1bndvbzEyMzQhIQ==
+    expiration: 3600000
+    refresh-expiration: 10000000
+    token-prefix: Bearer
+    header: Authorization
+  spring:
+    config:
+      activate:
+        on-profile: dev
+
+
