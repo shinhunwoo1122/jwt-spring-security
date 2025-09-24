@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.Optional;
@@ -31,14 +32,14 @@ public class JwtProvider {
     private final String header;
     private final ObjectMapper objectMapper;
 
-    public JwtProvider(@Value("${spring.jwt.secret}") String secretKey,
-                       @Value("${spring.jwt.expiration}") long accessTokenExpiration,
-                       @Value("${spring.jwt.refresh-expiration}") long refreshTokenExpiration,
-                       @Value("${spring.jwt.token-prefix}") String tokenPrefix,
-                       @Value("${spring.jwt.header}") String header){
+    public JwtProvider(@Value("${jwt.secret}") String secretKey,
+                       @Value("${jwt.expiration}") long accessTokenExpiration,
+                       @Value("${jwt.refresh-expiration}") long refreshTokenExpiration,
+                       @Value("${jwt.token-prefix}") String tokenPrefix,
+                       @Value("${jwt.header}") String header){
 
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        this.signingKey = Keys.hmacShaKeyFor(keyBytes);
+        this.signingKey = Keys.hmacShaKeyFor(keyBytes); // base64 디코딩한 키를 사용
         this.accessTokenExpiration = accessTokenExpiration;
         this.refreshTokenExpiration = refreshTokenExpiration;
         this.header = header;
@@ -84,10 +85,16 @@ public class JwtProvider {
 
     /* 토큰에서 사용자 payload (claims) body내용 map으로 추출 */
     public Claims getClaimFromToken(String token){
+
+        // Bearer 접두사 제거
+        if (token.startsWith(tokenPrefix)) { // tokenPrefix == "Bearer "
+            token = token.substring(tokenPrefix.length()).trim();
+        }
+
         return Jwts.parserBuilder()
                 .setSigningKey(signingKey)
                 .build()
-                .parseClaimsJwt(token)
+                .parseClaimsJws(token) // <-- 여기!
                 .getBody();
     }
 
@@ -100,16 +107,20 @@ public class JwtProvider {
     /* 토큰 유효성 검증 */
     public boolean validateToken(String token){
         try {
-            Jwts.parserBuilder().setSigningKey(signingKey).build().parseClaimsJwt(token);
+            if (token.startsWith(tokenPrefix)) {
+                token = token.substring(tokenPrefix.length()).trim();
+            }
+            Jwts.parserBuilder().setSigningKey(signingKey).build().parseClaimsJws(token);
             // io.jsonwebtoken.security.SecurityException 또는 MalformedJwtException: 토큰의 서명이 위조되거나 형식이 잘못된 경우 발생합니다.
+            return true;
         }catch (io.jsonwebtoken.security.SignatureException | MalformedJwtException e){
-            log.info("잘못된 JWT 서명입니다.");
+            log.info("잘못된 JWT 서명입니다. {}", e.getMessage());
         }catch (ExpiredJwtException e){ //토큰의 만료 시간이 지난 경우 발생합니다.
-            log.info("만료된 JWT 토큰입니다.");
+            log.info("만료된 JWT 토큰입니다. {}", e.getMessage());
         }catch (UnsupportedJwtException e){ //지원되지 않는 형식의 토큰인 경우 발생합니다.
-            log.info("지원되지 않는 JWT 토큰입니다.");
+            log.info("지원되지 않는 JWT 토큰입니다. {}", e.getMessage());
         }catch (IllegalArgumentException e){ //토큰 문자열이 비어있거나 null인 경우 발생합니다.
-            log.info("JWT 토큰이 잘못 되었습니다.");
+            log.info("JWT 토큰이 잘못 되었습니다. {}", e.getMessage());
         }
         return false;
     }

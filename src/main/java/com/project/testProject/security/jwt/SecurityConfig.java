@@ -26,9 +26,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    // JwtProvider와 UserDetailsService를 주입받아 JWT 필터 빈을 생성합니다.
+    private final JwtProvider jwtProvider;
+    private final UserDetailsService userDetailsService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder(){
@@ -52,6 +57,9 @@ public class SecurityConfig {
                     .accessDeniedHandler(jwtAccessDeniedHandler)
             )
             .authorizeHttpRequests(authorize -> authorize
+                    .requestMatchers("/api/test/**").permitAll()
+                    .requestMatchers("/api/register/**").permitAll()
+                    .requestMatchers("/api/login/**").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
                     .anyRequest().authenticated()
             ).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

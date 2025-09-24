@@ -6,22 +6,24 @@ spring:
     active: dev
 
   datasource:
-    url: jdbc:mysql://localhost:3306/testproject?serverTimezone=UTC&useSSL=false
+    url: jdbc:mysql://localhost:3306/testproject?useUnicode=true&characterEncoding=utf8
     username: shinhunwoo
     password: a456456!
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  jpa:
+    hibernate:
+      ddl-auto: none  # 엔티티 기반 자동 생성/업데이트 금지
+    properties:
+      hibernate.default_schema: testproject
+      hibernate.format_sql: true
+      hibernate.show_sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
 
-    # 로컬 개발용(dev) 프로파일
-  jwt:
-    secret: dGVzdHByb2plY3RfcGFzc3dvcmRfc2hpbmh1bndvbzEyMzQhIQ==
-    expiration: 3600000
-    refresh-expiration: 10000000
-    token-prefix: Bearer
-    header: Authorization
-  spring:
-    config:
-      activate:
-        on-profile: dev
-
-
+# JWT 설정
+jwt:
+  secret: dGVzdHByb2plY3RfcGFzc3dvcmRfc2hpbmh1bndvbzEyMzQhIQ==
+  expiration: 3600000            # Access Token 만료시간 (ms)
+  refresh-expiration: 604800000  # Refresh Token 만료시간 (ms)
+  token-prefix: "Bearer "
+  header: Authorization
