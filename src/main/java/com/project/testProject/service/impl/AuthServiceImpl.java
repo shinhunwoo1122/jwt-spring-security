@@ -2,6 +2,7 @@ package com.project.testProject.service.impl;
 
 import com.project.testProject.common.ResultObject;
 import com.project.testProject.model.dto.TokenResponseDto;
+import com.project.testProject.model.dto.UserIdProjection;
 import com.project.testProject.model.dto.UserLoginDto;
 import com.project.testProject.model.entity.RefreshToken;
 import com.project.testProject.model.entity.User;
@@ -49,9 +50,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ResultObject<Object> login(UserLoginDto loginDto) {
+
+        log.info("loginDto= {}", loginDto);
+
+        Optional<UserIdProjection> projection = userRepository.findByUserId(loginDto.getUsername());
+        Long userId = 0L;
+        if(projection.isPresent()){
+            userId = projection.get().getId();
+        }
         /* 1. 아이디 비밀번호로 인증 객체 생성 */
         UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword());
+                new UsernamePasswordAuthenticationToken(userId, loginDto.getPassword());
 
         log.info("1. 인증 토큰 생성: {}", authenticationToken);
 
@@ -63,25 +72,25 @@ public class AuthServiceImpl implements AuthService {
         /* 3. 인증이 성공하면 UserDetails 객체와 사용자 idx 가져옴 */
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         log.info("userDetails {}", userDetails);
-        User user = userRepository.findByUsername(userDetails.getUsername());
+        Optional<User> user = userRepository.findById(Long.valueOf(userDetails.getUsername()));
         log.info("유저 객체 정보: {}", user);
-        log.info("3. 사용자 정보 DB 조회 성공: idx={}, username={}", user.getIdx(), user.getUsername());
+        log.info("3. 사용자 정보 DB 조회 성공: idx={}, username={}", user.get().getId(), user.get().getUsername());
 
         /* 4. JwtProvider를 사용하여 토큰 생성 */
-        String accessToken = jwtProvider.generateAccessToken(userDetails, user.getIdx());
-        String refreshToken = jwtProvider.generateRefreshToken(userDetails, user.getIdx());
+        String accessToken = jwtProvider.generateAccessToken(userDetails, user.orElse(null));
+        String refreshToken = jwtProvider.generateRefreshToken(userDetails, user.orElse(null));
         log.info("4. 토큰 생성 완료 - 액세스 토큰: {}, 리프레시 토큰: {}", accessToken, refreshToken);
 
         /* 5. 기존 리프레시 토근이 있다면 삭제하고 새 토큰 저장 */
-        log.info("5. 기존 리프레시 토큰 삭제 시작 (userIdx: {})", user.getIdx());
-        refreshTokenRepository.deleteByUserId(user.getIdx());
+        log.info("5. 기존 리프레시 토큰 삭제 시작 (userIdx: {})", user.get().getId());
+        refreshTokenRepository.deleteByUserId(user.get().getId());
         log.info("5. 기존 리프레시 토큰 삭제 완료");
 
         long refreshTokenExpiration = jwtProvider.getRefreshTokenExpiration();
 
         RefreshToken token = new RefreshToken();
         token.setToken(refreshToken);
-        token.setUserId(user.getIdx());
+        token.setUserId(user.get().getId());
         token.setExpiryDate(LocalDateTime.now().plus(refreshTokenExpiration, ChronoUnit.MILLIS));
         refreshTokenRepository.save(token);
         log.info("5. 새로운 리프레시 토큰 저장 완료");
@@ -118,7 +127,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getPassword(),
                 java.util.Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority(user.getRole()))
         );
-        String newAccessToken = jwtProvider.generateAccessToken(userDetails, user.getIdx());
+        String newAccessToken = jwtProvider.generateAccessToken(userDetails, user);
 
         return ResultObject.<TokenResponseDto>builder().isSuccess(true).message("토큰이 갱신되었습니다.").data(
                 TokenResponseDto.builder()

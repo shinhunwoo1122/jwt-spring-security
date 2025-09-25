@@ -50,6 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             //토근에서 페이로드(클레임)을 추출 사용자 정보와 권한 직접 가져옴.
             Claims claims = jwtProvider.getClaimFromToken(token);
             String userId = claims.getSubject();
+            log.info("userId={}", userId);
             String roles = claims.get("role", String.class);
 
             //권한 문자열을 SimpleGrantedAuthority 객체 컬렉션으로 변환

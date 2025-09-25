@@ -28,9 +28,6 @@ public class SecurityConfig {
 
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-    // JwtProvider와 UserDetailsService를 주입받아 JWT 필터 빈을 생성합니다.
-    private final JwtProvider jwtProvider;
-    private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
 
@@ -61,6 +58,9 @@ public class SecurityConfig {
                     .requestMatchers("/api/register/**").permitAll()
                     .requestMatchers("/api/login/**").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/api/path/admin").hasRole("ADMIN")
+                    .requestMatchers("/api/path/manager").hasRole("MANAGER")
+                    .requestMatchers("/api/path/user").hasRole("USER")
                     .anyRequest().authenticated()
             ).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

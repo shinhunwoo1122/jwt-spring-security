@@ -1,6 +1,7 @@
 package com.project.testProject.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.testProject.model.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -48,15 +49,16 @@ public class JwtProvider {
     }
 
     /* accessToken 생성 */
-    public String generateAccessToken(UserDetails userDetails, Long userIdx){
+    public String generateAccessToken(UserDetails userDetails, User user){
         String authorities = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
         return Jwts.builder()
-                .setSubject(userDetails.getUsername())
-                .claim("userIdx", userIdx)
-                .claim("userId", userDetails.getUsername())
+                .setSubject(String.valueOf(user.getId()))
+                .claim("userIdx", user.getId())
+                .claim("userId", user.getUserId())
+                .claim("userName", user.getUsername())
                 .claim("role", authorities)
                 .claim("ip", getClientIp())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
@@ -66,15 +68,16 @@ public class JwtProvider {
     }
 
     /* refreshToken 생성 */
-    public String generateRefreshToken(UserDetails userDetails, Long userIdx){
+    public String generateRefreshToken(UserDetails userDetails, User user){
         String authorities = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
         return Jwts.builder()
-                .setSubject(userDetails.getUsername())
-                .claim("userIdx", userIdx)
-                .claim("userId", userDetails.getUsername())
+                .setSubject(String.valueOf(user.getId()))
+                .claim("userIdx", user.getId())
+                .claim("userId", user.getUserId())
+                .claim("userName", user.getUsername())
                 .claim("role", authorities)
                 .claim("ip", getClientIp())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
